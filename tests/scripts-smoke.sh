@@ -50,9 +50,9 @@ printf '# the test command\ntest -f SCOPE_PLAN.md && echo at-root && false\n' > 
 printf 'red (expect exit 2, Blocked…): '; gate
 printf 'test -f SCOPE_PLAN.md\n' > "$T/repo/.claude/hooks/gate-tests.cmd"
 printf 'green at the repo root (expect exit 0): '; gate
-echo "--- orchestrator check (TMPDIR isolated):"
-export TMPDIR="$T/tmp"; mkdir -p "$TMPDIR"
-oc() { jq -n --arg e "$1" --arg m "$2" --arg p "$3" '{hook_event_name:$e,session_id:"smoke-1",model:$m,prompt:$p}' | bash "$O" > "$T/oc.out" 2>&1; echo "exit $? — $(head -c 70 "$T/oc.out")"; }
+echo "--- orchestrator check (marker in the session scratchpad):"
+mkdir -p "$T/scratch"
+oc() { jq -n --arg e "$1" --arg m "$2" --arg p "$3" --arg s "$T/scratch" '{hook_event_name:$e,session_id:"smoke-1",model:$m,prompt:$p,scratchpad_dir:$s}' | bash "$O" > "$T/oc.out" 2>&1; echo "exit $? — $(head -c 70 "$T/oc.out")"; }
 printf 'prompt before any SessionStart (expect exit 0, a note): '; oc UserPromptSubmit "" "/start-feature 01 x"
 printf 'SessionStart on sonnet (expect exit 0): '; oc SessionStart claude-sonnet-5-5 ""
 printf 'ordinary prompt on sonnet (expect exit 0): '; oc UserPromptSubmit "" "fix the typo in README"
@@ -61,3 +61,7 @@ printf 'expanded skill on sonnet (expect exit 2): '; oc UserPromptSubmit "" "Sli
 printf 'SessionStart without a model keeps the record (expect exit 2 after): '; oc SessionStart "" "" >/dev/null; oc UserPromptSubmit "" "/start-feature 01 x"
 printf 'SessionStart on opus, then /start-feature (expect exit 0): '; oc SessionStart claude-opus-5-5 "" >/dev/null; oc UserPromptSubmit "" "/start-feature 01 x"
 printf 'ORCHESTRATOR_MODEL=fable on fable (expect exit 0): '; oc SessionStart claude-fable-5-1 "" >/dev/null; ORCHESTRATOR_MODEL=fable oc UserPromptSubmit "" "/start-feature 01 x"
+echo "victim" > "$T/victim"; rm -f "$T/scratch/orchestrator-model-smoke-1"; ln -s "$T/victim" "$T/scratch/orchestrator-model-smoke-1"
+printf 'planted symlink at the marker: SessionStart must not write through it: '; oc SessionStart claude-sonnet-5-5 ""; echo "   victim still says: $(cat "$T/victim")"
+printf 'planted symlink at the marker: /start-feature must not read through it (expect exit 0): '; oc UserPromptSubmit "" "/start-feature 01 x"
+printf 'no scratchpad in the input: falls back to a 0700 dir under HOME/.cache (expect exit 2): '; HOME="$T/home" XDG_CACHE_HOME= bash -c 'jq -n "{hook_event_name:\"SessionStart\",session_id:\"smoke-2\",model:\"claude-sonnet-5-5\"}" | bash "$0" >/dev/null; jq -n "{hook_event_name:\"UserPromptSubmit\",session_id:\"smoke-2\",prompt:\"/start-feature 01 x\"}" | bash "$0" >/dev/null 2>&1; echo "exit $? — mode $(stat -f %Lp "$HOME/.cache/agentic-workflow/sessions" 2>/dev/null || stat -c %a "$HOME/.cache/agentic-workflow/sessions")"' "$O"

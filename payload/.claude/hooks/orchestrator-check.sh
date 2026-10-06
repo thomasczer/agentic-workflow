@@ -27,15 +27,21 @@ except Exception: pass" 2>/dev/null
 event=$(field '.hook_event_name' "j.get('hook_event_name')")
 session=$(field '.session_id' "j.get('session_id')")
 [ -n "$session" ] || exit 0
-dir="${TMPDIR:-/tmp}/agentic-workflow-sessions"
-marker="$dir/$(printf '%s' "$session" | tr -c 'A-Za-z0-9._-' '_')"
+# The marker lives in the session's scratchpad when the input names one (private to the session), else
+# in a 0700 directory under the user's cache — never in a shared /tmp, where a planted symlink would
+# redirect the write or feed a forged model. A marker that is a link is never followed.
+dir=$(field '.scratchpad_dir' "j.get('scratchpad_dir')")
+{ [ -n "$dir" ] && [ -d "$dir" ] && [ ! -L "$dir" ]; } || dir="${XDG_CACHE_HOME:-$HOME/.cache}/agentic-workflow/sessions"
+marker="$dir/orchestrator-model-$(printf '%s' "$session" | tr -c 'A-Za-z0-9._-' '_')"
+[ -L "$marker" ] && exit 0
+
 
 case "$event" in
   SessionStart)
     model=$(field '.model' "j.get('model')")
     # Omitted after /clear or a recovery: keep what was recorded.
     [ -n "$model" ] || exit 0
-    mkdir -p "$dir" && printf '%s\n' "$model" > "$marker"
+        mkdir -p -m 700 "$dir" 2>/dev/null && printf '%s\n' "$model" > "$marker"
     exit 0
     ;;
   UserPromptSubmit)
