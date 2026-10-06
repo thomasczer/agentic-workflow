@@ -1,0 +1,30 @@
+---
+name: start-feature
+description: Run one slice end to end from a thin orchestration context — merge gate, branch, plan (forked, best model), TDD (implementer agents), verification (forked, cheapest model), reviews (agents), triage, PR — relaying the four stops to the user. Use to start every slice, in a fresh session on the orchestration model (`claude --model opus`); holds the loop and the model table, the single source CLAUDE.md points to.
+argument-hint: <NN> <short slice name>
+disable-model-invocation: true
+---
+
+Slice to run: $ARGUMENTS. You are the **orchestrator**: you dispatch, read reports, decide, and talk to the user. You never run the app driver, a build, the full check suite or a long tool loop yourself, and you never read a diff longer than a screen — a forked skill or a subagent does, and returns a report. Keep this context thin: it is the one re-sent at every turn.
+
+Models and effort — this table is the single source; the skills and agents carry theirs in their frontmatter, `/start-feature` itself runs on the mid model (`claude --model opus`). `best` is Claude Code's alias for `fable` where the account has it, else `opus`; it is documented for skills, not for agents, so `security-reviewer` names `fable` (replace by `opus` if the account has no Fable). Opus 5.5 and Sonnet 5.5 default to `medium` effort in Claude Code: the agents that must not skip a file or a test run carry a higher one. Never `haiku` for anything that judges code.
+
+| Gate                                                              | Context      | Model                                        | Effort  |
+| ----------------------------------------------------------------- | ------------ | -------------------------------------------- | ------- |
+| `/plan-feature`                                                   | forked skill | `best`                                       | default |
+| `implementer` (`/tdd`), one per task (worktrees when independent) | agent        | `opus`                                       | `high`  |
+| `/verify-slice`                                                   | forked skill | `sonnet`                                     | default |
+| `slice-reviewer`                                                  | agent        | `opus` (`model: fable` on `Loop: full`)      | `high`  |
+| `security-reviewer`                                               | agent        | `fable` (`opus` if the account has no Fable) | `xhigh` |
+| Log entries, README, PR body                                      | subagent     | `sonnet`                                     | default |
+
+What a forked skill or an agent reports is a lead, not a fact: anything you repeat to the user or act on (a number, a path, a verdict) you have read in its report with the evidence next to it. A forked skill cannot talk to the user: its questions come back in its report, you ask (`AskUserQuestion`, recommended option first) and send the answers back to the same agent (`SendMessage`).
+
+0. **Merge gate.** `gh pr list --state open`: an open PR of a previous slice means stop and tell the user — nothing starts before it is merged (`gh pr view <N> --json state` → `MERGED`; local-only project: the user's word). Then `git switch main && git pull`, and branch `feat/<NN>-<kebab-name>` from it.
+1. **Plan.** Invoke `/plan-feature <NN> <name>`: it runs in its own context on the best model and returns the plan path, the loop size, its open questions and what it decided alone. Relay the questions to the user (`AskUserQuestion`, recommended option first); send the answers back to the same planner agent (`SendMessage`) until the plan is final and committed. **Stop 1**: present the plan summary and wait for the user's approval. While waiting, only the waiting-time work of `/plan-feature` (probes, environment), delegated to a subagent.
+2. **Build.** For each task of the plan, dispatch an `implementer` agent with the task text, the plan path and whether the task is a load-bearing artifact — the agent carries `/tdd`, its model and its effort. Tasks the plan marks independent: one agent each, dispatched in the same message with `isolation: worktree` (the worktree branches from the slice — `worktree.baseRef` is `head` in `.claude/settings.json`); each report names its branch, which you merge into the slice branch with `git merge --no-ff`. A plan that flags a load-bearing artifact: the agent builds and returns the artifact alone first; **Stop 2**: present it, wait for validation, then resume the same agent (`SendMessage`) with the verdict.
+3. **Verify and review, in parallel.** In one message: dispatch `slice-reviewer` and `security-reviewer` (steps 1–2 of `/review-diff`: range command, untracked files, plan path, nothing else), and invoke `/verify-slice <plan path>` (forked): it runs typecheck, lint, tests and the project's driver, and returns the evidence per acceptance criterion. Anything red in its report goes back to an `implementer` agent, then `/verify-slice` again on the delta.
+4. **Triage.** Steps 4–6 of `/review-diff`, in this context: confirm each finding against the code (read the lines, delegate a reproduction when it is not a one-liner), sort it — apply (`implementer` agent, test first), **Stop 3** (changes scope, a recorded decision, visible behaviour, a load-bearing artifact, or unconfirmed: present with a recommendation and wait), or optional. Re-verify the delta.
+5. **Deliver.** A cheap-model subagent writes the log entries, the README and `CLAUDE.md` updates the plan asks for, and the PR body from `.github/pull_request_template.md` (review findings and their outcome included); you read it, push, open the PR. **Stop 4**: the merge is the user's. Start nothing for the next slice.
+
+Proportionality: a one-sentence diff (typo, rename, log line, dependency bump) skips 1, 2 and the reviewers — branch, change, `/verify-slice`, PR.
