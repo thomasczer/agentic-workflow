@@ -5,12 +5,13 @@ argument-hint: <NN> <short slice name>
 disable-model-invocation: true
 ---
 
-Slice to run: $ARGUMENTS. You are the **orchestrator**: you dispatch, read reports, decide, and talk to the user. You never run the app driver, a build, the full check suite or a long tool loop yourself, and you never read a diff longer than a screen — a forked skill or a subagent does, and returns a report. Keep this context thin: it is the one re-sent at every turn.
+Slice to run: $ARGUMENTS. Effort of this session: `${CLAUDE_EFFORT}` — the orchestrator runs at `high` (the table below; `.claude/settings.json` sets it): a lower value means a `--effort` flag or a `/effort` choice overrode it, so say so to the user before the merge gate and go on only on their word (the model is checked by a hook before this prompt reaches you). You are the **orchestrator**: you dispatch, read reports, decide, and talk to the user. You never run the app driver, a build, the full check suite or a long tool loop yourself, and you never read a diff longer than a screen — a forked skill or a subagent does, and returns a report. Keep this context thin: it is the one re-sent at every turn.
 
 Models and effort — this table is the single source; the skills and agents carry theirs in their frontmatter, `/start-feature` itself runs on the mid model, `opus` at `high` effort, which `.claude/settings.json` sets as the project's defaults (`model`, `modelSettings`). `best` is Claude Code's alias for `fable` where the account has it, else `opus`; it is documented for skills, not for agents, so `security-reviewer` names `fable` (replace by `opus` if the account has no Fable). Opus 5.5 and Sonnet 5.5 default to `medium` effort in Claude Code: the agents that must not skip a file or a test run carry a higher one. Never `haiku` for anything that judges code.
 
 | Gate                                                              | Context      | Model                                        | Effort  |
 | ----------------------------------------------------------------- | ------------ | -------------------------------------------- | ------- |
+| `/start-feature` (this context)                                   | session      | `opus` (project default)                     | `high`  |
 | `/plan-feature`                                                   | forked skill | `best`                                       | default |
 | `implementer` (`/tdd`), one per task (worktrees when independent) | agent        | `opus`                                       | `high`  |
 | `/verify-slice`                                                   | forked skill | `sonnet`                                     | default |

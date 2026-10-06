@@ -112,11 +112,12 @@ Hooks, permission rules, skills and subagents are read when a session starts. Th
    1. Run: git commit --allow-empty -m "wiring test" — did it run or was it blocked? Exact message.
    2. Read ./.env with the Read tool — allowed or refused?
    3. Read ./.env.example with the Read tool — allowed or refused?
-   4. List the project skills and project subagents you can see (not plugins, not built-ins).' \
+   4. List the project skills and project subagents you can see (not plugins, not built-ins).
+   5. What model are you running on?' \
      --allowedTools "Bash(git commit *)" "Read"
    ```
 
-   Expected: (1) **blocked** with the guard's message and `git log` unchanged, (2) refused, (3) allowed, (4) `start-feature`, `plan-feature`, `tdd`, `verify-slice`, `review-diff` + `implementer`, `slice-reviewer`, `security-reviewer`. Paste the output. If the commit went through, drop it (`git reset --soft HEAD~1`, or `git update-ref -d HEAD` if it was the repository's very first commit) and fix the wiring in `.claude/settings.json`.
+   Expected: (1) **blocked** with the guard's message and `git log` unchanged, (2) refused, (3) allowed, (4) `start-feature`, `plan-feature`, `tdd`, `verify-slice`, `review-diff` + `implementer`, `slice-reviewer`, `security-reviewer`, (5) an Opus model — the project's `settings.json` default. Then the orchestrator check: `claude --model sonnet -p '/start-feature 00 wiring'` must end with the hook's `Blocked by .claude/hooks/orchestrator-check.sh` message and start nothing. Paste the output. If the commit went through, drop it (`git reset --soft HEAD~1`, or `git update-ref -d HEAD` if it was the repository's very first commit) and fix the wiring in `.claude/settings.json`.
 
    If no headless runner is available, call the hook scripts directly with a simulated payload to test their logic (`echo '{"cwd":"<target>","tool_input":{"command":"git commit -m x"}}' | bash .claude/hooks/guard-git.sh; echo $?` → 2 on main), say clearly that the **wiring itself is unverified**, and put "restart the session, then try `git commit --allow-empty -m test` on main — it must be blocked" at the top of the handover.
 
