@@ -18,6 +18,8 @@ The agent clones this repo to a temp dir, installs the workflow into the project
 
 No Claude Code plugin needed — skills, three subagents, hooks and settings are all native. On the machine: `bash`, `git`, `jq` or `python3` (hooks), `gh` authenticated (PRs, merge checks), and [`mise`](https://mise.jdx.dev), assumed present as the one handler for every runtime and dev tool: projects pin their toolchain in a committed `mise.toml`.
 
+**Trust model.** Everything installed runs with the rights of the project that contains it, like any Claude Code hook: the hooks in `.claude/settings.json`, the test command the red-bar gate reads from `.claude/hooks/gate-tests.cmd`, and the formatter the format hook takes from the project's own `node_modules`. The toolkit adds no boundary beyond Claude Code's workspace trust: only bootstrap a repository you would run `npm install` in, and the git guard is a guardrail for the agent, not a security control (its header lists what it does not catch).
+
 ## The loop it installs
 
 | Step | Command          | Guarantee                                                                                                                                                                                                                                                                                                                                                     |
