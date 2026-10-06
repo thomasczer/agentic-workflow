@@ -2,10 +2,15 @@
 # The orchestrator (/start-feature) runs on the model of the model table — `opus` by default, set by
 # .claude/settings.json. A `--model` flag or ANTHROPIC_MODEL overrides that silently; this hook turns the
 # mismatch into a block instead of a surprise:
-#   - SessionStart: records the session's model (the hook input carries it) in a marker keyed by session.
+#   - SessionStart: records the session's model in a marker keyed by session. An interactive session's
+#     input carries it (`model`). A headless one (`claude -p`) does not (Claude Code 2.1.291): at startup
+#     the hook then reads the `--model` flag from the command line of the claude process ($CLAUDE_PID),
+#     else ANTHROPIC_MODEL, in that precedence (/model, which ranks above both, is interactive only).
 #   - UserPromptSubmit: when the submitted prompt is /start-feature, compares the recorded model with the
 #     expected family and BLOCKS the prompt (exit 2, message on stderr) when it does not match. Any other
-#     prompt, or a session whose model was not recorded (e.g. after /clear), passes.
+#     prompt passes. So does a session whose model was not recorded, with a note the session reads as
+#     context: after /clear (a new session id, no model in the input), and under `claude -p` when the
+#     model comes from a settings file or the flag names no family (`--model best`).
 # Expected family: $ORCHESTRATOR_MODEL (default `opus`; e.g. `ORCHESTRATOR_MODEL=fable claude --model fable`).
 # The effort is checked by the skill itself (`${CLAUDE_EFFORT}` in start-feature/SKILL.md): hook inputs
 # do not carry it at prompt time. Needs jq or python3; without them the check is inert, like guard-git.sh.
@@ -35,13 +40,24 @@ dir=$(field '.scratchpad_dir' "j.get('scratchpad_dir')")
 marker="$dir/orchestrator-model-$(printf '%s' "$session" | tr -c 'A-Za-z0-9._-' '_')"
 [ -L "$marker" ] && exit 0
 
+# The model a session was launched with, read from its command line, else its environment; only names
+# that carry a model family count (an alias like `best` or `default` resolves elsewhere: unknown here).
+launch_model() {
+  local m=""
+  [ -n "${CLAUDE_PID:-}" ] && m=$(ps -o args= -p "$CLAUDE_PID" 2>/dev/null | tr -s '[:space:]' '\n' |
+    awk 'f { print; exit } /^--model=/ { sub(/^--model=/, ""); print; exit } $0 == "--model" { f = 1 }')
+  [ -n "$m" ] || m="${ANTHROPIC_MODEL:-}"
+  printf '%s' "$m" | grep -Eiq 'opus|sonnet|haiku|fable' && printf '%s' "$m"
+}
 
 case "$event" in
   SessionStart)
     model=$(field '.model' "j.get('model')")
-    # Omitted after /clear or a recovery: keep what was recorded.
+    # Headless startup: no model in the input. Not after /clear or a resume, where /model may have
+    # changed the model since launch: there, keep what was recorded.
+    [ -n "$model" ] || [ "$(field '.source' "j.get('source')")" != startup ] || model=$(launch_model)
     [ -n "$model" ] || exit 0
-        mkdir -p -m 700 "$dir" 2>/dev/null && printf '%s\n' "$model" > "$marker"
+    mkdir -p -m 700 "$dir" 2>/dev/null && printf '%s\n' "$model" > "$marker"
     exit 0
     ;;
   UserPromptSubmit)

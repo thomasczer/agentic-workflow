@@ -36,6 +36,8 @@ Between two stops the agent chains the steps itself — you are not asked whethe
 
 Plus **design checkpoints**: load-bearing artifacts (schema, API contract, auth model) are presented and validated before anything is built on them.
 
+The orchestrator's model is checked by a hook too: `/start-feature` is **blocked** in a session that runs on another model than the one the table gives it (`opus`). Interactive sessions report their model to the hook; headless ones (`claude -p`) do not, so there the hook reads the `--model` flag or `ANTHROPIC_MODEL`, and a model set only in a settings file gets a note, not a block.
+
 ## Layout
 
 ```text
