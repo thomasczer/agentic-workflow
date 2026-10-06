@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Smoke test of slice-clock.sh (sub-directory, "2 h" limit, projection from the budget table, unreadable
-# limit, no default branch), of the format hook repository boundary, of the implementer's red-bar
+# limit, no default branch), of the format hook (repository boundary, mix from the nearest mix.exs), of the implementer's red-bar
 # gate (gate-tests.sh: off without a command file, blocks on red, passes on green, runs at the repo root)
 # and of the orchestrator check (orchestrator-check.sh: records the model, blocks /start-feature off-model). Read the output; needs git, jq.
 # Usage: bash tests/scripts-smoke.sh
@@ -42,6 +42,13 @@ echo "--- format hook must not use a node_modules above the repository:"
 mkdir -p "$T/node_modules/.bin" && printf '#!/bin/sh\necho CALLED >> %s/calls\n' "$T" > "$T/node_modules/.bin/prettier" && chmod +x "$T/node_modules/.bin/prettier"
 echo 'x' > "$T/repo/web/a.ts"
 jq -n --arg f "$T/repo/web/a.ts" '{tool_input:{file_path:$f}}' | bash "$H"; echo "hook exit $?; stray prettier called: $([ -f "$T/calls" ] && echo YES || echo no)"
+echo "--- format hook runs mix format from the nearest mix.exs (a stub mix records its directory):"
+mkdir -p "$T/bin" "$T/repo/backend/lib" && printf '#!/bin/sh\necho "$(pwd -P) $*" >> %s/mix-calls\n' "$T" > "$T/bin/mix" && chmod +x "$T/bin/mix"
+touch "$T/repo/backend/mix.exs" && echo 'x' > "$T/repo/backend/lib/a.ex"
+# MISE_DATA_DIR off: the hook puts mise shims first in PATH, and a real mix there would shadow the stub.
+jq -n --arg f "$T/repo/backend/lib/a.ex" '{tool_input:{file_path:$f}}' | (cd "$T/repo" && MISE_DATA_DIR="$T/no-mise" PATH="$T/bin:$PATH" bash "$H"); rc=$?
+Tp=$(cd "$T" && pwd -P); got=$(cut -d' ' -f1 "$T/mix-calls" 2>/dev/null)
+echo "hook exit $rc; mix ran in: ${got#"$Tp"/} (expect repo/backend) — $([ "$got" = "$Tp/repo/backend" ] && echo ok || echo WRONG)"
 echo "--- gate-tests hook, from a sub-directory of the checkout:"
 gate() { jq -n --arg c "$T/repo/web" '{cwd:$c}' | CLAUDE_PROJECT_DIR="$T/repo" bash "$G" > "$T/gate.out" 2>&1; echo "exit $? — $(head -c 90 "$T/gate.out")"; }
 mkdir -p "$T/repo/.claude/hooks"

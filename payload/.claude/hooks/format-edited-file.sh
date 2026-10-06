@@ -91,7 +91,10 @@ case "$file" in
     [ -n "$php" ] && [ -x "$php/vendor/bin/pint" ] && (cd "$php" && quiet vendor/bin/pint "$file")
     ;;
   *.ex|*.exs)
-    have mix && quiet mix format "$file"
+    # From the nearest mix.exs: its .formatter.exs (plugins, import_deps) is the one that applies, even
+    # when the Mix project sits in a sub-directory of the repository. No mix.exs: a loose script, as before.
+    mixproj=$(nearest mix.exs)
+    have mix && (cd "${mixproj:-.}" && quiet mix format "$file")
     ;;
   *.kt|*.kts)
     have ktlint && quiet ktlint -F "$file"
