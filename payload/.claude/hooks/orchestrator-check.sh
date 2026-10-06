@@ -41,7 +41,7 @@ case "$event" in
     model=$(field '.model' "j.get('model')")
     # Omitted after /clear or a recovery: keep what was recorded.
     [ -n "$model" ] || exit 0
-        mkdir -p -m 700 "$dir" 2>/dev/null && printf '%s\n' "$model" > "$marker"
+    mkdir -p -m 700 "$dir" 2>/dev/null && printf '%s\n' "$model" > "$marker"
     exit 0
     ;;
   UserPromptSubmit)

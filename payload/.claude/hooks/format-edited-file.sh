@@ -35,7 +35,7 @@ quiet() { "$@" >/dev/null 2>&1 || true; }
 # The nearest ancestor of the edited file that holds <marker>: tools are resolved from the package
 # the file belongs to, not from the repository root (monorepos, an app nested in `web/`…).
 nearest() { # nearest <marker> → directory, or nothing
-    # `pwd -P`: git prints the physical path of the top level, so the boundary check below must compare
+  # `pwd -P`: git prints the physical path of the top level, so the boundary check below must compare
   # physical paths too (macOS: /var → /private/var; a logical path never matches and the walk escapes).
   local d top; d=$(cd "$(dirname "$file")" 2>/dev/null && pwd -P) || return 0
   # Never look above the repository: a stray ~/node_modules must not format the project.
