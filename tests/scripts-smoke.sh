@@ -2,7 +2,7 @@
 # Smoke test of slice-clock.sh (sub-directory, "2 h" limit, projection from the budget table, unreadable
 # limit, no default branch), of the format hook (repository boundary, mix from the nearest mix.exs), of the implementer's red-bar
 # gate (gate-tests.sh: off without a command file, blocks on red, passes on green, runs at the repo root)
-# and of the orchestrator check (orchestrator-check.sh: records the model, blocks /start-feature off-model). Read the output; needs git, jq.
+# and of the orchestrator check (orchestrator-check.sh: records the model — under claude -p from the --model flag or ANTHROPIC_MODEL —, blocks /start-feature off-model). Read the output; needs git, jq.
 # Usage: bash tests/scripts-smoke.sh
 set -uo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -72,3 +72,30 @@ echo "victim" > "$T/victim"; rm -f "$T/scratch/orchestrator-model-smoke-1"; ln -
 printf 'planted symlink at the marker: SessionStart must not write through it: '; oc SessionStart claude-sonnet-5-5 ""; echo "   victim still says: $(cat "$T/victim")"
 printf 'planted symlink at the marker: /start-feature must not read through it (expect exit 0): '; oc UserPromptSubmit "" "/start-feature 01 x"
 printf 'no scratchpad in the input: falls back to a 0700 dir under HOME/.cache (expect exit 2): '; HOME="$T/home" XDG_CACHE_HOME= bash -c 'jq -n "{hook_event_name:\"SessionStart\",session_id:\"smoke-2\",model:\"claude-sonnet-5-5\"}" | bash "$0" >/dev/null; jq -n "{hook_event_name:\"UserPromptSubmit\",session_id:\"smoke-2\",prompt:\"/start-feature 01 x\"}" | bash "$0" >/dev/null 2>&1; echo "exit $? — mode $(stat -f %Lp "$HOME/.cache/agentic-workflow/sessions" 2>/dev/null || stat -c %a "$HOME/.cache/agentic-workflow/sessions")"' "$O"
+echo "--- orchestrator check under claude -p (SessionStart has no model; the hook reads the launch command line):"
+unset ANTHROPIC_MODEL
+# A stand-in for the claude process: its command line carries the flags, CLAUDE_PID points at it.
+fake() { bash -c 'sleep 30; :' claude "$@" >/dev/null 2>&1 & echo $!; }
+stop() { pkill -P "$1" 2>/dev/null; kill "$1" 2>/dev/null; }
+hp() { # hp <session> <source> <pid> → SessionStart without a model, then /start-feature
+  jq -n --arg s "$1" --arg src "$2" '{hook_event_name:"SessionStart",session_id:$s,source:$src}' | CLAUDE_PID="$3" bash "$O" >/dev/null 2>&1
+  jq -n --arg s "$1" '{hook_event_name:"UserPromptSubmit",session_id:$s,prompt:"/start-feature 00 wiring"}' | bash "$O" > "$T/oc.out" 2>&1
+  echo "exit $? — $(head -c 70 "$T/oc.out")"
+}
+# Markers land in the HOME cache here: -p inputs carry no scratchpad_dir.
+export HOME="$T/home" XDG_CACHE_HOME=
+p=$(fake --model sonnet -p "/start-feature 00 wiring")
+printf -- '--model sonnet -p (expect exit 2, Blocked…): '; hp p-1 startup "$p"
+printf -- 'same command line after /clear (source clear: not trusted, expect exit 0, a note): '; hp p-2 clear "$p"
+stop "$p"
+p=$(fake --model=claude-opus-5-5 -p "/start-feature 00 wiring")
+printf -- '--model=claude-opus-5-5 -p (expect exit 0): '; hp p-3 startup "$p"
+stop "$p"
+p=$(fake --model best -p "/start-feature 00 wiring")
+printf -- '--model best -p, an alias without a family (expect exit 0, a note): '; hp p-4 startup "$p"
+stop "$p"
+p=$(fake -p "/start-feature 00 wiring")
+printf -- 'no flag, ANTHROPIC_MODEL=claude-sonnet-5-5 (expect exit 2): '; ANTHROPIC_MODEL=claude-sonnet-5-5 hp p-5 startup "$p"
+printf -- 'no flag, no ANTHROPIC_MODEL: the settings model is not seen (expect exit 0, a note): '; hp p-6 startup "$p"
+stop "$p"
+printf -- 'no CLAUDE_PID in the hook environment (expect exit 0, a note): '; hp p-7 startup ""
