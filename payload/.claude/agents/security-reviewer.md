@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: Read-only security reviewer with a fresh context. Looks for concrete, exploitable problems introduced by a slice's diff — not for missing hardening. Dispatched by /review-diff in parallel with slice-reviewer; never edits files.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, LSP
 model: fable
 effort: xhigh
 memory: project
