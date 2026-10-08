@@ -12,6 +12,10 @@
 
 <!-- What you chose and what you deliberately did NOT do, and why. -->
 
+## Issues
+
+<!-- `Closes #N` for each issue this PR resolves; the issues it opened (follow-ups, spec gaps, actions for the user). "None" is a valid answer. -->
+
 ## Security
 
 <!-- Authorization added, what is validated server-side, any data-exposure or tenant-isolation considerations. "None — no privileged surface touched" is a valid answer. -->

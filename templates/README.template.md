@@ -2,6 +2,9 @@
   Skeleton for one slice at most. Slice 00 makes "Run locally" real (replayed on a clean clone);
   every slice keeps the rest true. A section with nothing to say yet says "Nothing yet." —
   never a "to be written" that could ship.
+  A current-state document, not a log: each slice rewrites what it changed and deletes what is no
+  longer true (git keeps it). About 150 lines; a topic that needs more (a feature's walkthrough, an
+  API, the architecture in depth) gets its own docs/<topic>.md and a one-line link here.
 -->
 
 # <Project name>
@@ -45,8 +48,8 @@ cp .env.example .env    # fill in the values (see below)
 
 ## Known limitations / what was cut and why
 
-<!-- Be explicit — this reads as scope control, not weakness. Updated by the slice that makes the cut, not at the end. -->
+<!-- Be explicit — this reads as scope control, not weakness. Current limitations only, one line each, linking to the doc of the topic: the slice that makes a cut adds its line, the slice that lifts it deletes it. -->
 
 ## What I would do next
 
-<!-- Ordered. The first items are usually the evidence you do not have yet. -->
+<!-- Three to five lines, ordered; the first items are usually the evidence you do not have yet. The full list is the open issues. -->
