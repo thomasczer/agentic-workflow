@@ -53,6 +53,16 @@
           }
         ]
       }
+    ],
+    "PostModelSwitch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/orchestrator-check.sh"
+          }
+        ]
+      }
     ]
   }
 }

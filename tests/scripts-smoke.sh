@@ -2,7 +2,7 @@
 # Smoke test of slice-clock.sh (sub-directory, "2 h" limit, projection from the budget table, unreadable
 # limit, no default branch), of the format hook (repository boundary, mix from the nearest mix.exs), of the implementer's red-bar
 # gate (gate-tests.sh: off without a command file, blocks on red, passes on green, runs at the repo root)
-# and of the orchestrator check (orchestrator-check.sh: records the model — under claude -p from the --model flag or ANTHROPIC_MODEL —, blocks /start-feature off-model). Read the output; needs git, jq.
+# and of the orchestrator check (orchestrator-check.sh: records the model — under claude -p from the --model flag or ANTHROPIC_MODEL —, blocks /start-feature off-model, records a /model switch and notes it when the session is orchestrating). Read the output; needs git, jq.
 # Usage: bash tests/scripts-smoke.sh
 set -uo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -68,6 +68,14 @@ printf 'expanded skill on sonnet (expect exit 2): '; oc UserPromptSubmit "" "Sli
 printf 'SessionStart without a model keeps the record (expect exit 2 after): '; oc SessionStart "" "" >/dev/null; oc UserPromptSubmit "" "/start-feature 01 x"
 printf 'SessionStart on opus, then /start-feature (expect exit 0): '; oc SessionStart claude-opus-5-5 "" >/dev/null; oc UserPromptSubmit "" "/start-feature 01 x"
 printf 'ORCHESTRATOR_MODEL=fable on fable (expect exit 0): '; oc SessionStart claude-fable-5-1 "" >/dev/null; ORCHESTRATOR_MODEL=fable oc UserPromptSubmit "" "/start-feature 01 x"
+ms() { jq -n --arg s "$1" --arg m "$2" --arg d "$T/scratch" '{hook_event_name:"PostModelSwitch",session_id:$s,to_model:$m,source:"command",scratchpad_dir:$d}' | bash "$O" > "$T/oc.out" 2>&1; echo "exit $? — $(head -c 70 "$T/oc.out")"; }
+printf 'orchestrating, /model sonnet (expect exit 0, a note: now runs on…): '; ms smoke-1 claude-sonnet-5-5
+printf '…then /start-feature again (expect exit 2: the switch was recorded): '; oc UserPromptSubmit "" "/start-feature 01 x"
+printf 'orchestrating, /model opus (expect exit 0, silent): '; ms smoke-1 claude-opus-5-5
+printf 'not orchestrating, /model sonnet (expect exit 0, silent): '; ms smoke-3 claude-sonnet-5-5
+printf '…and that switch is recorded: /start-feature (expect exit 2): '; jq -n --arg d "$T/scratch" '{hook_event_name:"UserPromptSubmit",session_id:"smoke-3",prompt:"/start-feature 01 x",scratchpad_dir:$d}' | bash "$O" >/dev/null 2>&1; echo "exit $?"
+echo "victim" > "$T/victim"; ln -s "$T/victim" "$T/scratch/orchestrator-model-smoke-4.orchestrating"
+printf 'planted symlink at the orchestrating flag: /start-feature must not write through it: '; jq -n --arg d "$T/scratch" '{hook_event_name:"UserPromptSubmit",session_id:"smoke-4",prompt:"/start-feature 01 x",scratchpad_dir:$d}' | bash "$O" >/dev/null 2>&1; echo "victim still says: $(cat "$T/victim")"
 echo "victim" > "$T/victim"; rm -f "$T/scratch/orchestrator-model-smoke-1"; ln -s "$T/victim" "$T/scratch/orchestrator-model-smoke-1"
 printf 'planted symlink at the marker: SessionStart must not write through it: '; oc SessionStart claude-sonnet-5-5 ""; echo "   victim still says: $(cat "$T/victim")"
 printf 'planted symlink at the marker: /start-feature must not read through it (expect exit 0): '; oc UserPromptSubmit "" "/start-feature 01 x"
