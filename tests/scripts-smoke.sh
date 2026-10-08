@@ -2,7 +2,7 @@
 # Smoke test of slice-clock.sh (sub-directory, "2 h" limit, projection from the budget table, unreadable
 # limit, no default branch), of the format hook (repository boundary, mix from the nearest mix.exs), of the implementer's red-bar
 # gate (gate-tests.sh: off without a command file, blocks on red, passes on green, runs at the repo root)
-# and of the orchestrator check (orchestrator-check.sh: records the model — under claude -p from the --model flag or ANTHROPIC_MODEL —, blocks /start-feature off-model, records a /model switch and notes it when the session is orchestrating). Read the output; needs git, jq.
+# of the post-compaction re-injection (reinject-after-compact.sh: branch, plan, commits, changed and untracked files) and of the orchestrator check (orchestrator-check.sh: records the model — under claude -p from the --model flag or ANTHROPIC_MODEL —, blocks /start-feature off-model, records a /model switch and notes it when the session is orchestrating). Read the output; needs git, jq.
 # Usage: bash tests/scripts-smoke.sh
 set -uo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -107,3 +107,11 @@ printf -- 'no flag, ANTHROPIC_MODEL=claude-sonnet-5-5 (expect exit 2): '; ANTHRO
 printf -- 'no flag, no ANTHROPIC_MODEL: the settings model is not seen (expect exit 0, a note): '; hp p-6 startup "$p"
 stop "$p"
 printf -- 'no CLAUDE_PID in the hook environment (expect exit 0, a note): '; hp p-7 startup ""
+echo "--- re-injection after compaction (reinject-after-compact.sh):"
+R="$here/payload/.claude/hooks/reinject-after-compact.sh"
+mkdir -p "$T/rc" && cd "$T/rc" && git init -q -b main . && git -c user.email=a@b.invalid -c user.name=t commit -q --allow-empty -m init &&
+  git switch -q -c feat/03-cart && mkdir -p docs/plans && echo plan > docs/plans/03-cart.md && git add . &&
+  git -c user.email=a@b.invalid -c user.name=t commit -q -m "docs: plan slice 03" && echo wip > cart.js && echo x >> docs/plans/03-cart.md
+echo 'on feat/03-cart (expect the branch, docs/plans/03-cart.md, one commit, the plan as A, cart.js untracked):'
+CLAUDE_PROJECT_DIR="$T/rc" bash "$R" < /dev/null; echo "exit $?"
+printf 'outside a git work tree (expect no output, exit 0): '; mkdir -p "$T/nogit"; CLAUDE_PROJECT_DIR="$T/nogit" bash "$R" < /dev/null; echo "exit $?"
