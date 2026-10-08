@@ -42,9 +42,28 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/orchestrator-check.sh"
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/reinject-after-compact.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/orchestrator-check.sh"
+          }
+        ]
+      }
+    ],
+    "PostModelSwitch": [
       {
         "hooks": [
           {

@@ -5,7 +5,14 @@
 #   - SessionStart: records the session's model in a marker keyed by session. An interactive session's
 #     input carries it (`model`). A headless one (`claude -p`) does not (Claude Code 2.1.291): at startup
 #     the hook then reads the `--model` flag from the command line of the claude process ($CLAUDE_PID),
-#     else ANTHROPIC_MODEL, in that precedence (/model, which ranks above both, is interactive only).
+#     else ANTHROPIC_MODEL, in that precedence.
+#   - PostModelSwitch (Claude Code 2.1.251+): /model, the /config picker, fast mode, an automatic fallback,
+#     opusplan, a resume — the session's model changed after SessionStart recorded it. Records `to_model`;
+#     when the session is already orchestrating (a /start-feature prompt went through) and the new model is
+#     off the expected family, prints a note: on exit 0 this event's stdout reaches the session as context.
+#     It cannot block (the model has already changed): the skill tells the user and waits for their word.
+#     The note rides on the next request of the same process: a `claude -p "/model …"` run on its own
+#     makes none, so there only the record is kept (seen on Claude Code 2.1.294).
 #   - UserPromptSubmit: when the submitted prompt is /start-feature, compares the recorded model with the
 #     expected family and BLOCKS the prompt (exit 2, message on stderr) when it does not match. Any other
 #     prompt passes. So does a session whose model was not recorded, with a note the session reads as
@@ -39,6 +46,10 @@ dir=$(field '.scratchpad_dir' "j.get('scratchpad_dir')")
 { [ -n "$dir" ] && [ -d "$dir" ] && [ ! -L "$dir" ]; } || dir="${XDG_CACHE_HOME:-$HOME/.cache}/agentic-workflow/sessions"
 marker="$dir/orchestrator-model-$(printf '%s' "$session" | tr -c 'A-Za-z0-9._-' '_')"
 [ -L "$marker" ] && exit 0
+# Set once a /start-feature prompt goes through: this session orchestrates. SessionStart leaves it alone,
+# so it survives a compaction; /clear starts a new session id, hence a new flag.
+flag="$marker.orchestrating"
+orchestrating() { [ -L "$flag" ] || { mkdir -p -m 700 "$dir" 2>/dev/null && : > "$flag"; }; }
 
 # The model a session was launched with, read from its command line, else its environment; only names
 # that carry a model family count (an alias like `best` or `default` resolves elsewhere: unknown here).
@@ -68,11 +79,22 @@ case "$event" in
     model=$(cat "$marker" 2>/dev/null || true)
     if [ -z "$model" ]; then
       echo "orchestrator-check: the model of this session was not recorded (no SessionStart with a model) — make sure it is \`$expected\`, the model of the orchestrator (see the model table of /start-feature)."
+      orchestrating
       exit 0
     fi
-    printf '%s' "$model" | grep -iq "$expected" && exit 0
+    printf '%s' "$model" | grep -iq "$expected" && { orchestrating; exit 0; }
     echo "Blocked by .claude/hooks/orchestrator-check.sh: this session runs on \`$model\`, and /start-feature is the orchestrator, which runs on \`$expected\` (the model table of the skill; .claude/settings.json sets it as the project's default — a --model flag or ANTHROPIC_MODEL overrode it). Start a fresh session with no model flag, or \`claude --model $expected\`. To orchestrate on another model on purpose: \`ORCHESTRATOR_MODEL=<family> claude --model <model>\`." >&2
     exit 2
+    ;;
+  PostModelSwitch)
+    model=$(field '.to_model' "j.get('to_model')")
+    [ -n "$model" ] || exit 0
+    mkdir -p -m 700 "$dir" 2>/dev/null && printf '%s\n' "$model" > "$marker"
+    expected="${ORCHESTRATOR_MODEL:-opus}"
+    { [ -f "$flag" ] && [ ! -L "$flag" ]; } || exit 0
+    printf '%s' "$model" | grep -iq "$expected" && exit 0
+    echo "orchestrator-check: this session now runs on \`$model\` (switch source: $(field '.source' "j.get('source')")) while it orchestrates a slice — /start-feature runs on \`$expected\` (its model table). Tell the user before the next gate, and go on only on their word."
+    exit 0
     ;;
 esac
 exit 0

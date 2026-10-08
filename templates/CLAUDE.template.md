@@ -91,7 +91,7 @@ Every slice lives on its own branch `feat/<NN>-<name>`, created from an up-to-da
 
 A one-sentence diff (typo, rename, log line, dependency bump) skips the plan, TDD and the reviewers: branch, change, `/verify-slice`, PR. When the spec or a decision is ambiguous: options with trade-offs and a recommendation; the decision is mine and gets recorded in `SCOPE_PLAN.md`. This workflow takes precedence over any equivalent skill injected by an installed plugin (planning, brainstorming, TDD, verification, review); plugin agents may still serve as extra reviewers.
 
-This file is loaded by every context, so it stays short: everyday commands here, the rest in `docs/commands.md`. When compacting, always preserve the plan path, the list of modified files, and the commands that were run.
+This file is loaded by every context, so it stays short: everyday commands here, the rest in `docs/commands.md`. When compacting, always preserve the commands that were run with their outcome, and my answers and decisions; the branch, the plan path and the changed files are re-injected from git after every compaction (`.claude/hooks/reinject-after-compact.sh`).
 
 ## Out of scope
 
