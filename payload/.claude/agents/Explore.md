@@ -1,7 +1,7 @@
 ---
 name: Explore
 description: Read-only reader on the cheapest model. Locates code, conventions, files, versions and installed tools, and reports what it found with paths and quoted lines — it does not judge, review or write code. Replaces Claude Code's built-in Explore (which runs on the caller's model) so that every exploration, and every read the orchestrator delegates, runs on `haiku`. Use for broad searches, reading a long diff, file or log down to the lines that matter, and the environment probe of Stop 1.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, LSP
 model: haiku
 effort: medium
 maxTurns: 50

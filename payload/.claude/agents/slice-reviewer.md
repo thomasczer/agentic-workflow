@@ -1,7 +1,7 @@
 ---
 name: slice-reviewer
 description: Read-only adversarial reviewer with a fresh context. Checks a diff against its plan, the project conventions, and the security rules. Dispatched by /review-diff; never edits files.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, LSP
 model: opus
 effort: high
 memory: project
