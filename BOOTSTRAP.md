@@ -18,7 +18,7 @@ Follow the phases in order. The **STOP** markers are real: end your turn and wai
 
 ## Phase 0 — Prerequisites
 
-No Claude Code plugin is required: everything installed is native (skills, four subagents, hooks, settings), and the commands referenced (`/security-review`, `/code-review`, `/verify`, `/run`) ship with Claude Code.
+No Claude Code plugin is required: everything installed is native (skills, four subagents, hooks, settings), and the commands referenced (`/security-review`, `/code-review`, `/verify`, `/run`) ship with Claude Code — `/verify` runs only when the user types it (Claude Code ≥ 2.1.215), so the agents drive the app with `/run` and the project's own driver.
 
 Check the machine, and report anything missing to the user **before** going further — do not install system tools on your own initiative:
 
@@ -134,7 +134,7 @@ Hooks, permission rules, skills and subagents are read when a session starts. Th
 4. Delete the toolkit clone.
 5. **STOP.** Hand over with a short report: what was installed, conflicts merged, decisions recorded, smoke-test evidence, and the suggested first command — `/start-feature 00 <name>`, in a fresh `claude` session (the project's settings start it on `opus` at `high` effort).
 
-Once the app can actually be launched (usually after slice 00), suggest running Claude Code's `/run-skill-generator` once: it records how to build and start the project so that `/run`, `/verify` and step 4 of `/verify-slice` can drive the real app without rediscovering the recipe each time.
+Once the app can actually be launched (usually after slice 00), suggest running Claude Code's `/run-skill-generator` once: it records how to build and start the project so that `/run` and step 4 of `/verify-slice` (and `/verify`, when the user runs it) can drive the real app without rediscovering the recipe each time.
 
 The implementer's red-bar gate is installed (`gate-tests.sh`) and switched on by `.claude/hooks/gate-tests.cmd`; it runs only when an implementer ends. Optional hardening, to offer once the project's commands are stable: a session-level `Stop` hook that runs typecheck + lint and exits 2 on failure, so no turn of the orchestrator ends on a broken tree. It is deliberately not installed by default — it costs a run per turn.
 
