@@ -9,7 +9,7 @@
 
 <!-- One or two sentences: what this project is and the current goal / scope. -->
 
-Scope, decisions, and time budget live in `SCOPE_PLAN.md` — read it before starting any feature work.
+Scope, milestone path and time budget live in `SCOPE_PLAN.md` — read it before starting any feature work. Decisions are in `docs/decisions.md`: look one up by its number, never read the file whole.
 
 ## Stack
 
@@ -41,7 +41,7 @@ Before committing any change:
 2. Lint passes.
 3. The tests covering the change pass.
 4. The **actual behavior was exercised** (drove the UI / hit the endpoint / observed the output). "It compiles" is not verification.
-5. The README is still true: what is built, how to run it, what was cut and why. The repository must be shippable after every merge, not only after the last one.
+5. The current-state documents are still true (see "Where things are written"): what is built, how to run it, what was cut and why. The repository must be shippable after every merge, not only after the last one.
 
 Run `/verify-slice` to do this properly.
 
@@ -52,8 +52,17 @@ Run `/verify-slice` to do this properly.
 - Keep files focused — one clear responsibility each; a file doing two jobs is a signal to split it.
 - Validate every external input at the boundary. Never trust a client-supplied id or amount.
 - Entry points (route handlers, controllers, CLI commands) stay thin and call into logic modules.
-- Anything someone else should hear — a gap or a contradiction in the spec or the designs, a limit of an API we depend on, a known limitation of what we built — is written in `NOTES.md` the moment it is noticed, one line with its context. Not in the plan: plans are not read again.
+- Anything someone should hear — a gap or a contradiction in the spec or the designs, a limit of an API we depend on, a known limitation, something only I can do — is written down the moment it is noticed, where "Where things are written" says. Not in the plan: plans are not read again.
 - <add project conventions>
+
+## Where things are written
+
+Three kinds, never mixed in one file: current state is rewritten, history is appended, open work is queued.
+
+- **Current state — rewritten, short.** `README.md` (what it is, how to run it, current limitations, links; about 150 lines), `SCOPE_PLAN.md` (the sentence, priorities, Won't, milestone path), `docs/<topic>.md` (an API, the architecture, a feature's walkthrough). A slice edits what it changed and deletes what is no longer true; git keeps the history.
+- **History — appended, never read whole.** `docs/decisions.md` (one numbered entry per decision of mine: what, why, who, when; a later one says "supersedes Dn"), `docs/adr/` for the structural ones, `docs/plans/`, commits and PR bodies.
+- **Open work — queued.** GitHub issues, opened with `gh issue create --label <label>`: `spec-gap` (a gap or contradiction in the spec or designs), `follow-up` (work cut from a slice, a limit to lift), `ops` (an action outside the code, often mine). The slice that does one closes it (`Closes #N` in the PR).
+- **What an agent needs while touching an area** — a library trap, a test-environment quirk: `.claude/rules/<area>.md` with a `paths:` frontmatter, so it loads only for matching files.
 
 ## Security
 
@@ -89,7 +98,7 @@ Every slice lives on its own branch `feat/<NN>-<name>`, created from an up-to-da
 3. **Stop 3**, only when it happens — a review finding that changes scope, a recorded decision, visible behaviour or a load-bearing artifact, or that could not be confirmed. Never dropped silently.
 4. **Stop 4** — the merge, which is mine. Opening the PR ends the slice: nothing of the next one starts until I say it is merged (`gh pr view <N> --json state` → `MERGED`); an approval in chat is not a merge, and at most one PR is open at any time.
 
-A one-sentence diff (typo, rename, log line, dependency bump) skips the plan, TDD and the reviewers: branch, change, `/verify-slice`, PR. When the spec or a decision is ambiguous: options with trade-offs and a recommendation; the decision is mine and gets recorded in `SCOPE_PLAN.md`. This workflow takes precedence over any equivalent skill injected by an installed plugin (planning, brainstorming, TDD, verification, review); plugin agents may still serve as extra reviewers.
+A one-sentence diff (typo, rename, log line, dependency bump) skips the plan, TDD and the reviewers: branch, change, `/verify-slice`, PR. When the spec or a decision is ambiguous: options with trade-offs and a recommendation; the decision is mine and gets recorded in `docs/decisions.md`. This workflow takes precedence over any equivalent skill injected by an installed plugin (planning, brainstorming, TDD, verification, review); plugin agents may still serve as extra reviewers.
 
 This file is loaded by every context, so it stays short: everyday commands here, the rest in `docs/commands.md`. When compacting, always preserve the commands that were run with their outcome, and my answers and decisions; the branch, the plan path and the changed files are re-injected from git after every compaction (`.claude/hooks/reinject-after-compact.sh`).
 
