@@ -1,0 +1,5 @@
+{
+  "name": "agentic-workflow",
+  "description": "Test-only wrapper: loads the toolkit's agents from payload/ (symlinks) so that `claude plugin eval` can score their behaviour.",
+  "version": "0.0.0"
+}
