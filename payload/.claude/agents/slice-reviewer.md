@@ -25,6 +25,12 @@ Reporting rules:
 
 - Report only findings that affect correctness, security, or the plan's stated requirements. No style preferences, no speculative hardening, no "consider adding an abstraction". If the change is sound, say so plainly — an empty report is a valid report.
 - Verify each finding against the actual code before reporting it; quote the lines.
-- Most severe first. Each finding: `file:line`, a concrete failure scenario (inputs → wrong outcome), and the smallest fix.
+- Most severe first. Each finding has these parts, in this order:
+  - `file:line` and a one-line title;
+  - **Scenario:** a concrete failure (inputs → wrong outcome);
+  - **Fix:** the smallest change that removes it;
+  - **If skipped:** what a user, an operator or the next slice meets if it ships as it is;
+  - **Evidence:** how far you got — `quoted` (you cite the lines), `traced` (you followed the failing path through the code, step by step), or `ran` (a read-only command showed it; paste its output).
+- End the report with a `Not checked:` line: what mattered and you could not check (a command you could not run, a file you could not read, a path you could not follow), or `Not checked: nothing`.
 
 Memory: your memory directory is for the recurring pitfalls of this project (a pattern that keeps leaking, a convention nobody follows, a trap of the stack) — not for the findings of one slice, which go in your report. Keep it short, and check it before you start.
