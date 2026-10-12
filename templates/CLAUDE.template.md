@@ -13,9 +13,11 @@ Scope, milestone path and time budget live in `SCOPE_PLAN.md` — read it before
 
 ## Stack
 
-<!-- Language, framework, database, key libraries. One line each, with exact major versions, and the "why" where it's a real choice you'd defend. -->
+<!-- Language, framework, database, key libraries. One line each, with the "why" where it's a real choice you'd defend. No version numbers: this file is loaded into every context and a copy goes stale at the next bump. -->
 
 Runtimes and dev tools are pinned in `mise.toml` and managed by `mise` only — never install a runtime or version manager another way. If a command is not found, run it through `mise exec --`.
+
+**Versions** are read where they are pinned, never copied here: `mise.toml` for runtimes and tools, <!-- the lockfile and manifests of each package manager, e.g. `pnpm-lock.yaml` (`pnpm ls <pkg>`), `mix.lock` (`mix deps`), an SDK pinned in a manifest -->.
 
 <!-- VERSION TRAPS: for every dependency whose installed major version may be newer than the agent's training data, add a bold warning here saying where the authoritative docs are (bundled docs in the package, official site) and that they must be read before writing code against it. Assumptions about library APIs are verified by reading or running, never guessed. -->
 
