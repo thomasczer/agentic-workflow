@@ -13,6 +13,6 @@ Prioritize tests for business logic and security boundaries (authorization, inpu
 
 Never move to the next behavior with a red bar. Show real test output at each step — no "it should pass" without running it. When a test fails unexpectedly, find out whether the test or the code is wrong before touching either.
 
-Commit the red test (`test:`) before the implementation that greens it (`feat:` / `fix:`) when the project's git discipline asks for it.
+Commit the red test (`test:`) before the implementation that greens it (`feat:` / `fix:`) when the project's git discipline asks for it — both inside the same task: a task never ends on the red.
 
 **Next — do not stop, do not ask.** You run inside the `implementer` agent dispatched by `/start-feature`: when your task is done and the bar is green, commit and end with the report the agent asks for (files and lines, tests and their output, anything the plan asked for that you could not do, and why). The orchestrator runs the reviewers and the full check; a plan task that flags a load-bearing artifact is built and reported **alone first**, before anything is built on it (design checkpoint).
