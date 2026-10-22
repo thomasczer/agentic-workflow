@@ -9,7 +9,7 @@
 
 <!-- One or two sentences: what this project is and the current goal / scope. -->
 
-Scope, milestone path and time budget live in `SCOPE_PLAN.md` — read it before starting any feature work. Decisions are in `docs/decisions.md`: look one up by its number, never read the file whole.
+Scope, milestone path and time budget live in `SCOPE_PLAN.md` — read it before starting any feature work. Decisions are in `docs/decisions.md`: look one up by its number (`grep -n 'D12 —' docs/decisions.md`), never read the file whole.
 
 ## Stack
 
