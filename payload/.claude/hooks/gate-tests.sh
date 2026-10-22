@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # SubagentStop hook of the `implementer` agent (declared in .claude/agents/implementer.md): the
 # deterministic version of "never end on a red bar".
-#   - The project's test command is the first non-comment line of `.claude/hooks/gate-tests.cmd`,
-#     written in slice 00 once the project has tests. No file, or an empty one: the gate is OFF (exit 0).
+#   - The command that runs the tests covering the change (a script that selects them from the diff,
+#     else the test suite) is the first non-comment line of `.claude/hooks/gate-tests.cmd`, written
+#     in slice 00 once the project has tests. No file, or an empty one: the gate is OFF (exit 0).
 #   - The command runs at the root of the repository the agent is working in — its worktree when it
 #     has one (`cwd` of the hook input follows the agent; $CLAUDE_PROJECT_DIR does not).
 #   - A non-zero exit blocks the agent from stopping: exit 2, and stderr (the tail of the output) is
