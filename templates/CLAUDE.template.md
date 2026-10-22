@@ -82,6 +82,7 @@ Three kinds, never mixed in one file: current state is rewritten, history is app
 
 - Test the risky / business-critical logic and the security boundaries. Don't chase coverage on trivial glue.
 - Prefer integration tests around real seams over mocking everything.
+- A red test is red: zero replays. A flaky test is fixed or skipped (with its issue number) in the slice that meets it, never re-run to see.
 - Priority order here: <the 3–4 riskiest behaviors of THIS project, most critical first>
 
 ## Git & PR discipline
