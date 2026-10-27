@@ -14,7 +14,7 @@
 
 ## Issues
 
-<!-- `Closes #N` for each issue this PR resolves; the issues it opened (follow-ups, spec gaps, actions for the user). "None" is a valid answer. -->
+<!-- `Closes #N` for each issue this PR resolves; the issues it opened (spec gaps, actions for the user, follow-ups a later slice is meant to do). "None" is a valid answer. -->
 
 ## Security
 
