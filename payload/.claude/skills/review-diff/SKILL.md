@@ -18,7 +18,7 @@ The session that wrote the code must not be the one grading it.
    - **Apply without asking** — findings you have confirmed in the code **and** that concern correctness, security, or conformance to the approved plan, and whose fix stays inside the plan's scope. Fix them test-first (one `implementer` agent per finding or per file; its gate proves the tests covering the fix), then list each one in your report and in the PR: `file:line`, the failure scenario, what was changed, the test that now covers it.
    - **Stop and ask** — anything whose fix would change the scope, a decision recorded in `docs/decisions.md` or the plan, user-visible behaviour or copy, a load-bearing artifact, or that you could not confirm. Present these most severe first, each with `file:line`, a concrete failure scenario (inputs → wrong outcome) and a proposed fix, and wait.
    - A finding that fits both of the above is a **stop and ask**.
-   - **Optional** — a reviewer asked to find gaps will always find some: anything that does not affect correctness, security, or the plan's requirements is listed separately, not applied and not asked about.
+   - **Optional** — a reviewer asked to find gaps will always find some: anything that does not affect correctness, security, or the plan's requirements is listed separately in the PR body, not applied, not asked about, and not turned into an issue.
 6. After fixes — a fix is a change like any other: the tests covering each one have run under the `implementer`'s gate; a fix of more than a few lines is reviewed by a fresh-context reviewer.
 
 **Next — do not stop unless step 5 produced a "stop and ask".** Deliver (step 5 of `/start-feature`), open the pull request, and stop there: the merge is the user's.
