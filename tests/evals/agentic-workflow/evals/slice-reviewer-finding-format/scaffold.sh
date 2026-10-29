@@ -21,12 +21,12 @@ Loop: light
 
 ## Tasks
 
-1. Add `shippingCost` in `src/shipping.js`, test-first.
+1. Add `shippingCost` in `src/shipping.js`.
 
-## Tests first
+## Tests, by task
 
-- 49.99 costs 5.
-- 50 is free.
+- Task 1, unit: 49.99 costs 5.
+- Task 1, unit: 50 is free.
 
 ## Out of scope
 
