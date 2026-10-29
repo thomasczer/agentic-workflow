@@ -81,14 +81,17 @@ Three kinds, never mixed in one file: current state is rewritten, history is app
 ## Testing
 
 - Test the risky / business-critical logic and the security boundaries. Don't chase coverage on trivial glue.
-- Prefer integration tests around real seams over mocking everything.
+- The tests of a task are the scenarios its plan assigns to it, at the level the plan says: the e2e spec for a flow, a unit test only for pure logic (a computation, a parser, a decision at a security boundary). A test that duplicates another, that asserts how the code is written rather than what it does, or that nobody has seen red, is deleted in the slice that meets it.
+- Mock only at a process boundary (the network, the clock, the filesystem, an external program), never a module of this project.
+- The suite has a time budget: <N> minutes for `<test command>` on the CI (<its time when this was written>). A slice that takes it over removes tests before it adds any; the budget is not raised in the slice that hits it.
 - A red test is red: zero replays. A flaky test is fixed or skipped (with its issue number) in the slice that meets it, never re-run to see.
+- Once per milestone, on its hardening slice: <the stack's mutation tool, or "no mutation tool for this stack"> on the logic modules; a surviving mutant is a finding, a score is not a target.
 - Priority order here: <the 3–4 riskiest behaviors of THIS project, most critical first>
 
 ## Git & PR discipline
 
 - Small atomic commits, Conventional Commits (`feat:`, `fix:`, `test:`, `chore:`, `docs:`).
-- Use TDD where it fits: a failing `test:` (red) then the `feat:` that greens it.
+- A `feat:` commit carries the tests that pin it; a `fix:` is preceded by the `test:` that reproduces the bug, red.
 - PRs explain: context → approach → trade-offs → how verified (`.github/pull_request_template.md`).
 
 ## How to work with me (the agent)
@@ -97,12 +100,12 @@ Every slice lives on its own branch `feat/<NN>-<name>`, created from an up-to-da
 
 **One session per slice, started by `/start-feature <NN> <name>` in a fresh session (the project's settings start it on `opus` at `high` effort), closed when the PR is open.** That session orchestrates: each gate runs in its own fresh context on its own model and effort (the loop, the gates and the model table live in `.claude/skills/start-feature/SKILL.md`, the single source), and only the orchestrator talks to me. The loop has **four stops and only four**; between two stops the orchestrator chains the gates itself, without asking whether to go on; at a stop it waits, and runs nothing on the side:
 
-1. **Stop 1** — my approval of the plan (`docs/plans/`, declaring `Loop: full | light`, which I can overrule). No test is made green before it.
+1. **Stop 1** — my approval of the plan (`docs/plans/`, declaring `Loop: full | light`, which I can overrule). No code is written before it.
 2. **Stop 2**, only if the slice has one — a design checkpoint: a load-bearing artifact (schema, migration, API contract, auth model; client-side: state that outlives a screen or a session, a route contract, the module every request goes through) is presented and validated before anything is built on it. A plan approval is not an artifact approval.
 3. **Stop 3**, only when it happens — a review finding that changes scope, a recorded decision, visible behaviour or a load-bearing artifact, or that could not be confirmed. Never dropped silently.
 4. **Stop 4** — the merge, which is mine. Opening the PR ends the slice: nothing of the next one starts until I say it is merged (`gh pr view <N> --json state` → `MERGED`); an approval in chat is not a merge, and at most one PR is open at any time.
 
-A one-sentence diff (typo, rename, log line, dependency bump) skips the plan, TDD and the reviewers: branch, change, the tests covering the change, PR. When the spec or a decision is ambiguous: options with trade-offs and a recommendation; the decision is mine and gets recorded in `docs/decisions.md`. A bare "continue" from me, in reply to a stop where every option carried a recommendation, is agreement with those recommendations: say so at the top of the reply, record them, go on. What a subagent reports is a lead, not a fact; after two failed fixes of the same problem, start again from a better prompt rather than try a third. This workflow takes precedence over any equivalent skill injected by an installed plugin (planning, brainstorming, TDD, verification, review); plugin agents may still serve as extra reviewers.
+A one-sentence diff (typo, rename, log line, dependency bump) skips the plan, the implementers and the reviewers: branch, change, the tests covering the change, PR. When the spec or a decision is ambiguous: options with trade-offs and a recommendation; the decision is mine and gets recorded in `docs/decisions.md`. A bare "continue" from me, in reply to a stop where every option carried a recommendation, is agreement with those recommendations: say so at the top of the reply, record them, go on. What a subagent reports is a lead, not a fact; after two failed fixes of the same problem, start again from a better prompt rather than try a third. This workflow takes precedence over any equivalent skill injected by an installed plugin (planning, brainstorming, TDD, verification, review); plugin agents may still serve as extra reviewers.
 
 This file is loaded by every context, so it stays short: everyday commands here, the rest in `docs/commands.md`. When compacting, always preserve the commands that were run with their outcome, and my answers and decisions; the branch, the plan path and the changed files are re-injected from git after every compaction (`.claude/hooks/reinject-after-compact.sh`).
 

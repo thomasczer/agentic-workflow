@@ -14,16 +14,17 @@ Inputs you will be given: the diff command that covers the whole slice (normally
 
 Check, in this order:
 
-1. **Plan conformance** — every acceptance criterion and task in the plan is implemented; every edge case the plan lists has a test; nothing outside the plan's scope changed. Report each gap.
-2. **Correctness** — bugs and unhandled edge cases on the paths this diff touches.
-3. **Silent failures** — swallowed errors, empty catch blocks, fallbacks that hide problems, errors misreported to the user as something else.
-4. **Security** — missing server-side authorization, trust in client-supplied ids or amounts, sensitive fields leaking into responses, unverified or non-idempotent inbound webhooks/callbacks, tenant-isolation gaps, secrets in code.
-5. **Conventions** — violations of the rules written in `CLAUDE.md` (not your own preferences).
-6. **Claims vs. guarantees** — comments, docs, or README statements that promise more than the code delivers.
+1. **Plan conformance** — every acceptance criterion and task in the plan is implemented; every scenario the plan assigns to a task has its test, at the level the plan says; nothing outside the plan's scope changed. Report each gap.
+2. **Tests** — a test that cannot fail (it would pass against a wrong or empty implementation), that duplicates another, or that asserts how the code is written rather than what it does (a mock called with these arguments, a helper called once) is a finding whose fix is its deletion or its rewrite, naming the scenario it should have pinned; so is a mock of a module of this project (`CLAUDE.md` "Testing" says where mocks are allowed), and a test the plan did not ask for that no commit or report gives a reason for.
+3. **Correctness** — bugs and unhandled edge cases on the paths this diff touches.
+4. **Silent failures** — swallowed errors, empty catch blocks, fallbacks that hide problems, errors misreported to the user as something else.
+5. **Security** — missing server-side authorization, trust in client-supplied ids or amounts, sensitive fields leaking into responses, unverified or non-idempotent inbound webhooks/callbacks, tenant-isolation gaps, secrets in code.
+6. **Conventions** — violations of the rules written in `CLAUDE.md` (not your own preferences).
+7. **Claims vs. guarantees** — comments, docs, or README statements that promise more than the code delivers.
 
 Reporting rules:
 
-- Report only findings that affect correctness, security, or the plan's stated requirements. No style preferences, no speculative hardening, no "consider adding an abstraction". If the change is sound, say so plainly — an empty report is a valid report.
+- Report only findings that affect correctness, security, the plan's stated requirements, or the test budget (a test to delete is a finding: its fix is the deletion). No style preferences, no speculative hardening, no "consider adding an abstraction". If the change is sound, say so plainly — an empty report is a valid report.
 - Verify each finding against the actual code before reporting it; quote the lines.
 - Most severe first. Each finding has these parts, in this order:
   - `file:line` and a one-line title;
